@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <title>Web App</title>
+</head>
+<body>
+    <div id="prediction"></div>
+    <video id="camera" autoplay></video>
+    <div id="buttons">
+        <button onclick="learn(1)">Class 1</button>
+        <button onclick="learn(2)">Class 2</button>
+        <button onclick="learn(3)">Class 3</button>
+        <button onclick="learn(4)">Class 4</button>
+        <button onclick="learn(5)">Class 5</button>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
