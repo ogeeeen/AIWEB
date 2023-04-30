@@ -1,7 +1,12 @@
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
+import base64
 import cv2
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
+
+app = Flask(__name__)
+CORS(app)
 
 app = Flask(__name__)
 knn = KNeighborsClassifier(n_neighbors=3)
