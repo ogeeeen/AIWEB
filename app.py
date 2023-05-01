@@ -4,11 +4,11 @@ import base64
 import cv2
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
+import os  # 追加
 
 app = Flask(__name__)
 CORS(app)
 
-app = Flask(__name__)
 knn = KNeighborsClassifier(n_neighbors=3)
 training_data = []
 labels = []
@@ -33,4 +33,4 @@ def predict():
     return jsonify({"probabilities": probabilities.tolist()})
 
 if __name__ == "__main__":
-     app.run(host='0.0.0.0', port=os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=os.environ.get('PORT', 5000))
