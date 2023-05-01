@@ -1,55 +1,89 @@
 const video = document.getElementById("video");
-const buttons = document.querySelectorAll(".class-btn");
-const predictButton = document.getElementById("predict");
-const output = document.getElementById("output");
+const canvas = document.createElement("canvas");
+const context = canvas.getContext("2d");
 
-async function startCamera() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = stream;
-  } catch (err) {
-    console.error("Error: " + err);
-  }
+function getCameraDevices() {
+  return navigator.mediaDevices.enumerateDevices().then((devices) => {
+    return devices.filter((device) => device.kind === "videoinput");
+  });
 }
 
-startCamera();
-
-buttons.forEach((button) => {
-  button.addEventListener("click", async () => {
-    const classId = parseInt(button.dataset.classId);
-    const data = await captureData();
-    postData("/learn", { data, class_id: classId }).then((res) => {
-      console.log(res);
+function startCameraStream(deviceId) {
+  const constraints = {
+    video: {
+      deviceId: deviceId ? { exact: deviceId } : undefined,
+    },
+  };
+  navigator.mediaDevices
+    .getUserMedia(constraints)
+    .then(function (stream) {
+      video.srcObject = stream;
+      video.play();
+    })
+    .catch(function (err) {
+      console.error("An error occurred: " + err);
     });
-  });
-});
+}
 
-predictButton.addEventListener("click", async () => {
-  const data = await captureData();
-  postData("/predict", { data }).then((res) => {
-    const probabilities = res.probabilities;
-    const maxIndex = probabilities.reduce((iMax, x, i, arr) => (x > arr[iMax] ? i : iMax), 0);
-    output.innerText = `Class ${maxIndex + 1}: ${(probabilities[maxIndex] * 100).toFixed(2)}%`;
-  });
+getCameraDevices().then((devices) => {
+  if (devices.length > 0) {
+    startCameraStream(devices[0].deviceId);
+  } else {
+    console.error("No cameras found.");
+  }
 });
 
 async function captureData() {
-  const imageCapture = new ImageCapture(video.srcObject.getVideoTracks()[0]);
-  const bitmap = await imageCapture.grabFrame();
-  const imageData = new ImageData(bitmap.width, bitmap.height);
-  imageData.data.set(bitmap.data);
-  const data = Array.from(imageData.data);
-  return data;
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  return imageData.data;
 }
 
 async function postData(url = "", data = {}) {
   const response = await fetch(url, {
     method: "POST",
+    mode: "cors",
+    cache: "no-cache",
+    credentials: "same-origin",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
-    body: JSON.stringify(data),
+    redirect: "follow",
+    referrerPolicy: "no-referrer",
+    body: JSON.stringify(data)
   });
 
   return await response.json();
 }
+
+function processButtonClick(label) {
+  const imageData = captureData(); // 修正
+  postData("/classify", { image: imageData, label: label })
+    .then((result) => {
+      console.log(result);
+      const prediction = result.prediction;
+      const confidence = (prediction.confidence * 100).toFixed(2);
+      document.getElementById("result").innerHTML =
+        "Prediction: " + prediction.label + " (" + confidence + "%)";
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
+}
+
+const buttons = document.querySelectorAll(".class-btn");
+buttons.forEach((button) => {
+  button.addEventListener("click", (event) => {
+    buttons.forEach((btn) => btn.classList.remove("active"));
+    event.target.classList.add("active");
+    processButtonClick(event.target.id);
+  });
+});
+
+video.addEventListener("click", () => {
+  const activeButton = document.querySelector(".class-btn.active");
+  if (activeButton) {
+    processButtonClick(activeButton.id);
+  }
+});
