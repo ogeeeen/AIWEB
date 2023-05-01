@@ -1,27 +1,27 @@
-from flask import Flask, jsonify, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
+import numpy as np
 
 app = Flask(__name__)
 CORS(app)
 
 knn = KNeighborsClassifier(n_neighbors=3)
 
-@app.route('/classify', methods=['POST'])
-def classify():
-    data = request.get_json()
-    input_data = np.array(data['inputData']).reshape(1, -1)
-    prediction = knn.predict(input_data)
-    return jsonify({'prediction': int(prediction[0])})
-
 @app.route('/learn', methods=['POST'])
 def learn():
-    data = request.get_json()
-    training_data = np.array(data['trainingData']).reshape(-1, 1)
-    labels = np.array(data['labels'])
+    data = request.json
+    training_data = [list(d.values()) for d in data['training_data']]
+    labels = data['labels']
     knn.fit(training_data, labels)
-    return jsonify({'success': True})
+    return jsonify({"status": "success"})
+#️　変更
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.json
+    input_data = np.array(data['input']).reshape(1, -1)
+    result = knn.predict(input_data)
+    return jsonify({"result": int(result[0])})
 
 if __name__ == '__main__':
     app.run()
