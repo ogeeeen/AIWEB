@@ -59,7 +59,7 @@ async function postData(url = "", data = {}) {
 
 function processButtonClick(label) {
   const imageData = captureData(); // 修正
-  postData("/classify", { image: imageData, label: label })
+  postData("/learn", { data: imageData, class_id: label })
     .then((result) => {
       console.log(result);
       const prediction = result.prediction;
