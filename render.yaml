@@ -3,4 +3,4 @@ services:
     build:
       command: pip install -r requirements.txt
     start:
-      command: gunicorn app:app
+      command: gunicorn app:app -b 0.0.0.0:5000
